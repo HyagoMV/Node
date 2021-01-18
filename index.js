@@ -7,19 +7,42 @@ const http = require('http')
 
 // Sync
 // Class: http.Server
-const server = new http.Server((req, res) => {
-  switch (req.url) {
+const server = new http.Server((message, response) => {
+  response.writeHead(200, { 
+    'Content-Type': 'text/plain',
+    'Trailer': 'Content-MD5' 
+  });
+
+  switch (message.url) {
     case '/': {
-      res.write(`${req.method} ${req.url}`)
+      response.write(`${message.method} ${message.url}`)
       break;
     }
     case '/a': {
-      res.write(`${req.method} ${req.url}`)
+      response.write(`${message.method} ${message.url}`)
       break;
     }
   }
-  res.end();
+  // TODO
+  //response.addTrailers({ 'Content-MD5': '7895bf4b8828b55ceaf47747b4bca667' });
+
+  response.end(()=> {
+    console.log(`\t[http.ServerResponse] Reposta concluída...`)
+  });
+
+  // Async
+  // Class: http.ServerResponse
+  // Event: 'close'
+  response.on('close', () => {
+    console.log(`\t[http.ServerResponse] [Event] close...`)
+    
+  })
+
+  // console.log(message.headers)
+  // console.log(message.httpVersion)
+  //console.log(message.rawHeaders)
 });
+
 
 // Async
 // Event: 'checkContinue'
@@ -34,9 +57,32 @@ server.on('checkExpectation', (request, response) => {
 });
 
 // Async
-// Evento: 'clientError'
+// Class: http.Server
+// Event: 'clientError'
 server.on('clientError', (exception, socket) => {
-  console.log('\t[Event] clientError...')
+  console.log('\t[http.Server] [Event] clientError...')
+  
+  let message;
+  switch (exception.code) {
+    case 'HPE_HEADER_OVERFLOW': {
+        message = 'HTTP/1.1 431 Request Header Fields Too Large'
+      break;
+    }
+    case 'ERR_HTTP_REQUEST_TIMEOUT': {
+        message = 'HTTP/1.1 408 Request Timeout';
+      break;
+    }
+    default: {
+        message = 'HTTP/1.1 400 Bad Request';
+      break;
+    }
+  }
+ 
+  // Verifica se o socket aida é gravável
+  if (socket.writable)
+    socket.end(message + '\r\n\r\n',() => {
+      console.log(`\t[Socket] Envio o pacote FIN`);
+    });
 });
 
 // Async
@@ -55,6 +101,7 @@ server.on('connection', (socket) => {
 // Event: 'request'
 server.on('request', (request, response) => {
   console.log('\t[Event] request...')
+  console.log(`\t[Event] ${request}`) 
 });
 
 // Async
@@ -64,12 +111,13 @@ server.on('upgrade', (request, socket, head) => {
 });
 
 
-setTimeout(()=>{
+setTimeout(() => {
   // Async
   server.close(() => {
-    console.log('\t[Servidor] Todas as conexão forão encerradas')
+    console.log('\t[htpp.Server] Todas as conexões forão encerradas')
+    console.log('--- FIM ---')
   })
-}, 10000); 
+}, 1000);
 
 // Async
 // Class: http.ClientRequest
@@ -78,22 +126,43 @@ server.on('timeout', () => {
   console.log('\t[Event] timeout...')
 })
 
-server.headersTimeout  = 1; // ms
 
 // Async
 server.listen({
   host: '127.0.0.1',
-  port:  process.env.PORT || 3000
+  port: process.env.PORT || 3000
 });
 
+
+// Async
 // Classe: net.Server
 // Event: 'listening'
 server.on('listening', () => {
+  console.log(' --- Início ---')
   console.log('\t[net.Server] [Event] listening...')
-  console.log('\t[Servidor] Está em execução...')
-  console.log(`\t[Servidor] IP: ${server.address().address}`)
-  console.log(`\t[Servidor] Porta: ${server.address().port}`)
+  console.log('\t[http.Server] [Socket] Esperando por conexões...')
+  console.log(`\t\tIP: ${server.address().address}`)
+  console.log(`\t\tPorta: ${server.address().port}`)
+  // console.log(`\t[http.Server] ${server.listening}`);
 })
 
+// Sync
+// Limitar para evitar o 'Hash Collision Attack'
+server.maxHeadersCount = 10000;
 
-// });
+// Sync
+// Limitar para evitar o 'Denial-of-Service Attack'
+server.requestTimeout = 1;
+
+// Sync
+server.setTimeout(5000);
+  
+  // Sync
+  // Keep-Alive: timeout=1
+  server.keepAliveTimeout = 10000; // ms 
+  
+  server.headersTimeout = 10000; // ms
+  
+  
+  
+  // });
