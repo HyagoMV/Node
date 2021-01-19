@@ -1,27 +1,37 @@
 module.exports = (server) => {
+  // ----------------------------------------------------------
+
   // Async
   // Event: 'connection'
   server.on('connection', (socket) => {
     console.log('\t[Event] connection...')
   });
 
+// ----------------------------------------------------------
+
   // Async
   // Event: 'close'
   server.on('close', () => {
     console.log('\t[Event] close...')
   });
+  
+// ----------------------------------------------------------
 
-  // Async
+// Async
 // Event: 'checkContinue'
 server.on('checkContinue', (request, response) => {
   console.log('\t[Event] checkContinue...')
 });
+
+// ----------------------------------------------------------
 
 // Async
 // Event: 'checkExpectation'
 server.on('checkExpectation', (request, response) => {
   console.log('\t[Event] checkExpectation...')
 });
+
+// ----------------------------------------------------------
 
 // Async
 // Class: http.Server
@@ -52,8 +62,7 @@ server.on('clientError', (exception, socket) => {
     });
 });
 
-
-
+// ----------------------------------------------------------
 
 // Async
 // Event: 'request'
@@ -62,12 +71,15 @@ server.on('request', (request, response) => {
   console.log(`\t[Event] ${request}`) 
 });
 
+// ----------------------------------------------------------
+
 // Async
 // Event: 'upgrade'
 server.on('upgrade', (request, socket, head) => {
   console.log('\t[Event] upgrade...')
 });
 
+// ----------------------------------------------------------
 
 setTimeout(() => {
   // Async
@@ -77,6 +89,8 @@ setTimeout(() => {
   })
 }, 1000);
 
+// ----------------------------------------------------------
+
 // Async
 // Class: http.ClientRequest
 // Event: 'timeout'
@@ -84,16 +98,20 @@ server.on('timeout', () => {
   console.log('\t[Event] timeout...')
 })
 
+// ----------------------------------------------------------
+
 // Async
 // Classe: net.Server
 // Event: 'listening'
 server.on('listening', () => {
+  const { address, port } = server.address(); 
   console.log(' --- Início ---')
   console.log('\t[net.Server] [Event] listening...')
   console.log('\t[http.Server] [Socket] Esperando por conexões...')
-  console.log(`\t\tIP: ${server.address().address}`)
-  console.log(`\t\tPorta: ${server.address().port}`)
+  console.log(`\t\tIP: ${address}`)
+  console.log(`\t\tPorta: ${port}`)
   // console.log(`\t[http.Server] ${server.listening}`);
 })
 
+// ----------------------------------------------------------
 }
